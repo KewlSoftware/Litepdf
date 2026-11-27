@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="LitePDF" />
+  <meta name="theme-color" content="#f2f2f7" />
+  <title>LitePDF — Light Document Scanner</title>
+
+  <!-- Inline SVG Icon -->
+  <link id="apple-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23007AFF'/%3E%3Cpath d='M54 38h48l28 28v76a8 8 0 0 1-8 8H54a8 8 0 0 1-8-8V46a8 8 0 0 1 8-8z' fill='white'/%3E%3Cpath d='M102 38v28h28' fill='%23D6E8FF'/%3E%3Ctext x='90' y='118' font-family='-apple-system, sans-serif' font-size='28' font-weight='800' fill='%23007AFF' text-anchor='middle'%3EPDF%3C/text%3E%3C/svg%3E" />
+
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --muted: #6e6e73;
+      --accent: #007aff;
+      --accent-dark: #005ecb;
+      --danger: #ff3b30;
+      --success: #34c759;
+      --border: #e5e5ea;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+      min-height: 100vh;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(242, 242, 247, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .brand span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: #e5e5ea;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .capture-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px 12px;
+      border-radius: 14px;
+      border: 1.5px dashed #c7c7cc;
+      background: #fafafa;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .capture-btn.primary {
+      background: rgba(0, 122, 255, 0.08);
+      border-color: rgba(0, 122, 255, 0.45);
+      color: var(--accent);
+    }
+
+    .capture-btn:active {
+      transform: scale(0.98);
+    }
+
+    .capture-btn svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      margin: 0 0 8px 2px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: #efeff4;
+      padding: 3px;
+      border-radius: 11px;
+      gap: 3px;
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 6px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .seg-btn.active {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .settings-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .filename-row {
+      display: flex;
+      align-items: center;
+      background: #efeff4;
+      border-radius: 10px;
+      padding: 0 12px;
+    }
+
+    .filename-row input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 0;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .filename-row span {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .pages-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .clear-btn {
+      border: none;
+      background: none;
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 6px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 28px 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .pages-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .page-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #f9f9fb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .page-thumb-wrap {
+      width: 68px;
+      height: 88px;
+      border-radius: 8px;
+      background: #e5e5ea;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .page-thumb-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .page-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .page-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .page-dims {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .page-controls {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .mini-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .mini-btn.danger {
+      color: var(--danger);
+      border-color: rgba(255, 59, 48, 0.25);
+    }
+
+    .result-banner {
+      display: none;
+      background: rgba(52, 199, 89, 0.12);
+      border: 1px solid rgba(52, 199, 89, 0.35);
+      border-radius: 14px;
+      padding: 12px 14px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .result-banner.show {
+      display: flex;
+    }
+
+    .result-info strong {
+      display: block;
+      font-size: 14px;
+      color: #1c7c34;
+    }
+
+    .result-info span {
+      font-size: 12px;
+      color: #2b6a3b;
+    }
+
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 25;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    }
+
+    .bottom-inner {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-main {
+      flex: 1;
+      border: none;
+      border-radius: 13px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-main:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-main:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #efeff4;
+      color: var(--text);
+      flex: 0.7;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      width: 100%;
+      max-width: 520px;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: env(safe-area-inset-bottom);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .modal ol {
+      padding-left: 20px;
+      margin: 0 0 16px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .modal p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 16px;
+      line-height: 1.45;
+    }
+
+    .toast {
+      position: fixed;
+      top: calc(70px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      background: rgba(28, 28, 30, 0.92);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s;
+      z-index: 60;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">PDF</div>
+      <div>
+        <h1>LitePDF</h1>
+        <span>100% Local &bull; Ultra-Light Scanner</span>
+      </div>
+    </div>
+    <button class="icon-btn" id="helpBtn" aria-label="Install as App">?</button>
+  </header>
+
+  <main>
+    <!-- Capture / Upload -->
+    <section class="card">
+      <div class="action-grid">
+        <button class="capture-btn primary" id="cameraBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span>Take Photo</span>
+        </button>
+
+        <button class="capture-btn" id="uploadBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>Upload Images</span>
+        </button>
+      </div>
+
+      <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+      <input id="uploadInput" type="file" accept="image/*" multiple />
+    </section>
+
+    <!-- Compression & Filter Settings -->
+    <section class="card settings-stack">
+      <div>
+        <div class="section-label">Compression Size</div>
+        <div class="segmented" id="qualityGroup">
+          <button class="seg-btn active" data-value="ultra" type="button">Ultra Light</button>
+          <button class="seg-btn" data-value="balanced" type="button">Balanced</button>
+          <button class="seg-btn" data-value="sharp" type="button">Sharp</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Document Filter</div>
+        <div class="segmented" id="filterGroup">
+          <button class="seg-btn active" data-value="bw" type="button">Doc B&amp;W</button>
+          <button class="seg-btn" data-value="gray" type="button">Grayscale</button>
+          <button class="seg-btn" data-value="color" type="button">Color</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">File Name</div>
+        <div class="filename-row">
+          <input id="filenameInput" type="text" placeholder="Scan_Document" />
+          <span>.pdf</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ready PDF Banner -->
+    <section class="result-banner" id="resultBanner">
+      <div class="result-info">
+        <strong id="resultTitle">PDF Ready</strong>
+        <span id="resultMeta">0 KB &bull; 0 pages</span>
+      </div>
+    </section>
+
+    <!-- Pages List -->
+    <section class="card">
+      <div class="pages-header">
+        <div class="section-label" style="margin:0;">Pages (<span id="pageCount">0</span>)</div>
+        <button class="clear-btn" id="clearAllBtn" type="button" style="display:none;">Clear All</button>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        Snap a photo or upload images to build a lightweight PDF. Everything is compressed directly on your device.
+      </div>
+
+      <div class="pages-list" id="pagesList"></div>
+    </section>
+  </main>
+
+  <!-- Fixed Bottom Action Bar -->
+  <div class="bottom-bar">
+    <div class="bottom-inner">
+      <button class="btn-main btn-primary" id="shareBtn" type="button" disabled>
+        Share PDF
+      </button>
+      <button class="btn-main btn-secondary" id="downloadBtn" type="button" disabled>
+        Download
+      </button>
+    </div>
+  </div>
+
+  <!-- Install Help Modal -->
+  <div class="modal-backdrop" id="helpModal">
+    <div class="modal">
+      <h2>Add LitePDF to iPhone Home Screen</h2>
+      <ol>
+        <li>Open this page in <strong>Safari</strong> on your iPhone.</li>
+        <li>Tap the <strong>Share</strong> icon (square with upward arrow) at the bottom.</li>
+        <li>Scroll down and tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li>
+      </ol>
+      <p>
+        Tip: For the best app experience and native Share Sheet support, host this single HTML file on any free HTTPS service (GitHub Pages, Netlify Drop, or Vercel).
+      </p>
+      <button class="btn-main btn-primary" id="closeModalBtn" type="button" style="width:100%;">Got It</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // State
+    const pages = []; // { id, img, rotation, previewUrl }
+    let qualityPreset = 'ultra';
+    let filterMode = 'bw';
+    let lastPdfBlob = null;
+    let lastPdfName = '';
+
+    const PRESETS = {
+      ultra:    { maxDim: 1050, jpegQuality: 0.42 },
+      balanced: { maxDim: 1450, jpegQuality: 0.62 },
+      sharp:    { maxDim: 1950, jpegQuality: 0.80 }
+    };
+
+    // Elements
+    const cameraBtn = document.getElementById('cameraBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const cameraInput = document.getElementById('cameraInput');
+    const uploadInput = document.getElementById('uploadInput');
+    const qualityGroup = document.getElementById('qualityGroup');
+    const filterGroup = document.getElementById('filterGroup');
+    const filenameInput = document.getElementById('filenameInput');
+    const pagesList = document.getElementById('pagesList');
+    const pageCount = document.getElementById('pageCount');
+    const emptyState = document.getElementById('emptyState');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resultBanner = document.getElementById('resultBanner');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMeta = document.getElementById('resultMeta');
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const toastEl = document.getElementById('toast');
+
+    // Set default filename
+    function setDefaultFilename() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      filenameInput.value = `Scan_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+    }
+    setDefaultFilename();
+
+    // Generate PNG apple-touch-icon dynamically so iOS displays a crisp icon on Home Screen
+    (function generatePngTouchIcon() {
+      try {
+        const c = document.createElement('canvas');
+        c.width = 180;
+        c.height = 180;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#007AFF';
+        ctx.fillRect(0, 0, 180, 180);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.roundRect(46, 36, 88, 108, 12);
+        ctx.fill();
+        ctx.fillStyle = '#007AFF';
+        ctx.font = '800 28px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PDF', 90, 96);
+        document.getElementById('apple-icon').href = c.toDataURL('image/png');
+      } catch (e) {}
+    })();
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2200);
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function invalidatePdf() {
+      lastPdfBlob = null;
+      resultBanner.classList.remove('show');
+    }
+
+    // Load file into Image object
+    function loadImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(img);
+        };
+        img.onerror = (err) => {
+          URL.revokeObjectURL(url);
+          reject(err);
+        };
+        img.src = url;
+      });
+    }
+
+    // Render image with rotation, resize, and filter onto canvas
+    function renderPageCanvas(page, maxDim, jpegQuality) {
+      const { img, rotation } = page;
+      const rotated = rotation % 180 !== 0;
+      const srcW = rotated ? img.naturalHeight : img.naturalWidth;
+      const srcH = rotated ? img.naturalWidth : img.naturalHeight;
+
+      const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+      const outW = Math.max(1, Math.round(srcW * scale));
+      const outH = Math.max(1, Math.round(srcH * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, outW, outH);
+
+      ctx.save();
+      ctx.translate(outW / 2, outH / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      const drawW = rotated ? outH : outW;
+      const drawH = rotated ? outW : outH;
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      if (filterMode === 'gray' || filterMode === 'bw') {
+        const imgData = ctx.getImageData(0, 0, outW, outH);
+        const d = imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          let lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          if (filterMode === 'bw') {
+            // High-contrast document enhancement: push paper to white, keep text crisp
+            lum = (lum - 128) * 1.65 + 148;
+            if (lum > 215) lum = 255;
+            else if (lum < 35) lum = 0;
+            else lum = Math.max(0, Math.min(255, lum));
+          }
+          d[i] = d[i + 1] = d[i + 2] = lum;
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      return {
+        dataUrl: canvas.toDataURL('image/jpeg', jpegQuality),
+        width: outW,
+        height: outH
+      };
+    }
+
+    function updatePreviews() {
+      invalidatePdf();
+      pages.forEach(p => {
+        const preview = renderPageCanvas(p, 260, 0.7);
+        p.previewUrl = preview.dataUrl;
+      });
+      renderPagesList();
+    }
+
+    function renderPagesList() {
+      pageCount.textContent = pages.length;
+      emptyState.style.display = pages.length ? 'none' : 'block';
+      clearAllBtn.style.display = pages.length ? 'inline-block' : 'none';
+      shareBtn.disabled = pages.length === 0;
+      downloadBtn.disabled = pages.length === 0;
+
+      pagesList.innerHTML = '';
+      pages.forEach((p, idx) => {
+        const item = document.createElement('div');
+        item.className = 'page-item';
+
+        const rotated = p.rotation % 180 !== 0;
+        const w = rotated ? p.img.naturalHeight : p.img.naturalWidth;
+        const h = rotated ? p.img.naturalWidth : p.img.naturalHeight;
+        const orientation = w > h ? 'Landscape' : 'Portrait';
+
+        item.innerHTML = `
+          <div class="page-thumb-wrap">
+            <img src="${p.previewUrl}" alt="Page ${idx + 1}" />
+          </div>
+          <div class="page-meta">
+            <div class="page-title">Page ${idx + 1}</div>
+            <div class="page-dims">${orientation} &bull; ${w}&times;${h}px</div>
+            <div class="page-controls">
+              <button class="mini-btn" data-action="rotate" data-idx="${idx}" type="button">&#8635; Rotate</button>
+              <button class="mini-btn" data-action="up" data-idx="${idx}" type="button" ${idx === 0 ? 'disabled' : ''}>&uarr;</button>
+              <button class="mini-btn" data-action="down" data-idx="${idx}" type="button" ${idx === pages.length - 1 ? 'disabled' : ''}>&darr;</button>
+              <button class="mini-btn danger" data-action="delete" data-idx="${idx}" type="button">Delete</button>
+            </div>
+          </div>
+        `;
+        pagesList.appendChild(item);
+      });
+    }
+
+    async function handleFiles(fileList) {
+      if (!fileList || !fileList.length) return;
+      showToast(`Processing ${fileList.length} image${fileList.length > 1 ? 's' : ''}...`);
+      for (const file of Array.from(fileList)) {
+        if (!file.type.startsWith('image/')) continue;
+        try {
+          const img = await loadImage(file);
+          const page = { id: Date.now() + Math.random(), img, rotation: 0, previewUrl: '' };
+          page.previewUrl = renderPageCanvas(page, 260, 0.7).dataUrl;
+          pages.push(page);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      invalidatePdf();
+      renderPagesList();
+    }
+
+    async function buildPdf() {
+      if (!pages.length) return null;
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('PDF library still loading — check internet connection.');
+        return null;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const preset = PRESETS[qualityPreset];
+      let doc = null;
+
+      for (let i = 0; i < pages.length; i++) {
+        const rendered = renderPageCanvas(pages[i], preset.maxDim, preset.jpegQuality);
+        const isLandscape = rendered.width > rendered.height;
+        const orientation = isLandscape ? 'l' : 'p';
+
+        if (i === 0) {
+          doc = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+        } else {
+          doc.addPage('a4', orientation);
+        }
+
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 4; // subtle 4mm margin
+        const availW = pageW - margin * 2;
+        const availH = pageH - margin * 2;
+
+        const imgRatio = rendered.width / rendered.height;
+        const boxRatio = availW / availH;
+        let drawW, drawH;
+
+        if (imgRatio > boxRatio) {
+          drawW = availW;
+          drawH = availW / imgRatio;
+        } else {
+          drawH = availH;
+          drawW = availH * imgRatio;
+        }
+
+        const x = (pageW - drawW) / 2;
+        const y = (pageH - drawH) / 2;
+
+        doc.addImage(rendered.dataUrl, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
+      }
+
+      const blob = doc.output('blob');
+      const rawName = (filenameInput.value || 'LitePDF_Scan').trim().replace(/[^a-zA-Z0-9_\- ]/g, '');
+      const fileName = (rawName || 'LitePDF_Scan') + '.pdf';
+
+      lastPdfBlob = blob;
+      lastPdfName = fileName;
+
+      resultTitle.textContent = fileName;
+      resultMeta.textContent = `${formatBytes(blob.size)} • ${pages.length} page${pages.length > 1 ? 's' : ''}`;
+      resultBanner.classList.add('show');
+
+      return { blob, fileName };
+    }
+
+    function triggerDownload(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      showToast(`Downloaded (${formatBytes(blob.size)})`);
+    }
+
+    // Event Listeners
+    cameraBtn.addEventListener('click', () => cameraInput.click());
+    uploadBtn.addEventListener('click', () => uploadInput.click());
+
+    cameraInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+      e.target.value = '';
+    });
+
+    uploadInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+      e.target.value = '';
+    });
+
+    qualityGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.seg-btn');
+      if (!btn) return;
+      qualityPreset = btn.dataset.value;
+      qualityGroup.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+      invalidatePdf();
+    });
+
+    filterGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.seg-btn');
+      if (!btn) return;
+      filterMode = btn.dataset.value;
+      filterGroup.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+      updatePreviews();
+    });
+
+    pagesList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const idx = Number(btn.dataset.idx);
+      const action = btn.dataset.action;
+
+      if (action === 'rotate') {
+        pages[idx].rotation = (pages[idx].rotation + 90) % 360;
+        pages[idx].previewUrl = renderPageCanvas(pages[idx], 260, 0.7).dataUrl;
+      } else if (action === 'up' && idx > 0) {
+        [pages[idx - 1], pages[idx]] = [pages[idx], pages[idx - 1]];
+      } else if (action === 'down' && idx < pages.length - 1) {
+        [pages[idx + 1], pages[idx]] = [pages[idx], pages[idx + 1]];
+      } else if (action === 'delete') {
+        pages.splice(idx, 1);
+      }
+      invalidatePdf();
+      renderPagesList();
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      pages.length = 0;
+      invalidatePdf();
+      renderPagesList();
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      shareBtn.disabled = true;
+      shareBtn.textContent = 'Building PDF...';
+      try {
+        const result = lastPdfBlob ? { blob: lastPdfBlob, fileName: lastPdfName } : await buildPdf();
+        if (!result) return;
+
+        const file = new File([result.blob], result.fileName, { type: 'application/pdf' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: result.fileName
+          });
+        } else {
+          triggerDownload(result.blob, result.fileName);
+        }
+      } catch (err) {
+        if (err && err.name !== 'AbortError') {
+          showToast('Share unavailable — downloading instead');
+          if (lastPdfBlob) triggerDownload(lastPdfBlob, lastPdfName);
+        }
+      } finally {
+        shareBtn.disabled = pages.length === 0;
+        shareBtn.textContent = 'Share PDF';
+      }
+    });
+
+    downloadBtn.addEventListener('click', async () => {
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = 'Building...';
+      try {
+        const result = lastPdfBlob ? { blob: lastPdfBlob, fileName: lastPdfName } : await buildPdf();
+        if (result) triggerDownload(result.blob, result.fileName);
+      } finally {
+        downloadBtn.disabled = pages.length === 0;
+        downloadBtn.textContent = 'Download';
+      }
+    });
+
+    helpBtn.addEventListener('click', () => helpModal.classList.add('open'));
+    closeModalBtn.addEventListener('click', () => helpModal.classList.remove('open'));
+    helpModal.addEventListener('click', (e) => {
+      if (e.target === helpModal) helpModal.classList.remove('open');
+    });
+  </script>
+</body>
+</html>
