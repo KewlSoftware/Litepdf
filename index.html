@@ -10,7 +10,7 @@
   <title>LitePDF — Light Document Scanner</title>
 
   <!-- Inline SVG Icon -->
-  <link id="apple-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23007AFF'/%3E%3Crect x='46' y='36' width='88' height='108' rx='12' fill='%23fff'/%3E%3Ctext x='90' y='96' text-anchor='middle' dominant-baseline='middle' font-family='-apple-system,BlinkMacSystemFont,sans-serif' font-size='28' font-weight='800' fill='%23007AFF'%3EPDF%3C/text%3E%3C/svg%3E" />
+  <link id="apple-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23007AFF'/%3E%3Cpath d='M54 38h48l28 28v76a8 8 0 0 1-8 8H54a8 8 0 0 1-8-8V46a8 8 0 0 1 8-8z' fill='white'/%3E%3Cpath d='M102 38v28h28' fill='%23D6E8FF'/%3E%3Ctext x='90' y='118' font-family='-apple-system, sans-serif' font-size='28' font-weight='800' fill='%23007AFF' text-anchor='middle'%3EPDF%3C/text%3E%3C/svg%3E" />
 
   <!-- jsPDF CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -201,6 +201,71 @@
       gap: 12px;
     }
 
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f9f9fb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .toggle-text strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .toggle-text span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #d1d1d6;
+      transition: 0.2s;
+      border-radius: 28px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .switch input:checked + .slider {
+      background-color: var(--success);
+    }
+
+    .switch input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
     .filename-row {
       display: flex;
       align-items: center;
@@ -292,6 +357,18 @@
       font-size: 14px;
       font-weight: 600;
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(52, 199, 89, 0.16);
+      color: #1c7c34;
+      padding: 2px 6px;
+      border-radius: 999px;
     }
 
     .page-dims {
@@ -320,6 +397,11 @@
     .mini-btn:disabled {
       opacity: 0.35;
       cursor: default;
+    }
+
+    .mini-btn.accent {
+      color: var(--accent);
+      border-color: rgba(0, 122, 255, 0.3);
     }
 
     .mini-btn.danger {
@@ -408,11 +490,11 @@
       flex: 0.7;
     }
 
-    /* Modal */
+    /* Modals */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.5);
       display: none;
       align-items: flex-end;
       justify-content: center;
@@ -429,9 +511,11 @@
       width: 100%;
       max-width: 520px;
       border-radius: 20px;
-      padding: 20px;
+      padding: 18px;
       margin-bottom: env(safe-area-inset-bottom);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .modal h2 {
@@ -450,8 +534,58 @@
     .modal p {
       font-size: 13px;
       color: var(--muted);
-      margin: 0 0 16px;
+      margin: 0 0 14px;
       line-height: 1.45;
+    }
+
+    /* Crop Modal */
+    .crop-preview-box {
+      width: 100%;
+      height: 280px;
+      background: #1c1c1e;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .crop-preview-box canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .crop-sliders {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .crop-slider-item {
+      background: #f2f2f7;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+
+    .crop-slider-item label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .crop-slider-item input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .crop-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
     .toast {
@@ -488,7 +622,7 @@
       <div class="brand-icon">PDF</div>
       <div>
         <h1>LitePDF</h1>
-        <span>100% Local &bull; Ultra-Light Scanner</span>
+        <span>100% Local &bull; Auto-Trim Scanner</span>
       </div>
     </div>
     <button class="icon-btn" id="helpBtn" aria-label="Install as App">?</button>
@@ -534,10 +668,21 @@
       <div>
         <div class="section-label">Document Filter</div>
         <div class="segmented" id="filterGroup">
-          <button class="seg-btn active" data-value="bw" type="button">Doc B&amp;W</button>
-          <button class="seg-btn" data-value="gray" type="button">Grayscale</button>
+          <button class="seg-btn active" data-value="gray" type="button">Grayscale</button>
+          <button class="seg-btn" data-value="bw" type="button">Doc B&amp;W</button>
           <button class="seg-btn" data-value="color" type="button">Color</button>
         </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-text">
+          <strong>Auto-Trim Page Borders</strong>
+          <span>Removes dark background outside white paper</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoTrimToggle" checked />
+          <span class="slider"></span>
+        </label>
       </div>
 
       <div>
@@ -565,7 +710,7 @@
       </div>
 
       <div class="empty-state" id="emptyState">
-        Snap a photo or upload images to build a lightweight PDF. Everything is compressed directly on your device.
+        Snap a photo or upload images to build a lightweight PDF. White page borders are trimmed automatically for a clean scan.
       </div>
 
       <div class="pages-list" id="pagesList"></div>
@@ -584,6 +729,39 @@
     </div>
   </div>
 
+  <!-- Crop / Trim Modal -->
+  <div class="modal-backdrop" id="cropModal">
+    <div class="modal">
+      <h2>Trim Page Borders</h2>
+      <div class="crop-preview-box">
+        <canvas id="cropCanvas"></canvas>
+      </div>
+      <div class="crop-sliders">
+        <div class="crop-slider-item">
+          <label>Top <span id="valTop">0%</span></label>
+          <input type="range" id="rangeTop" min="0" max="45" step="1" value="0" />
+        </div>
+        <div class="crop-slider-item">
+          <label>Bottom <span id="valBottom">0%</span></label>
+          <input type="range" id="rangeBottom" min="0" max="45" step="1" value="0" />
+        </div>
+        <div class="crop-slider-item">
+          <label>Left <span id="valLeft">0%</span></label>
+          <input type="range" id="rangeLeft" min="0" max="45" step="1" value="0" />
+        </div>
+        <div class="crop-slider-item">
+          <label>Right <span id="valRight">0%</span></label>
+          <input type="range" id="rangeRight" min="0" max="45" step="1" value="0" />
+        </div>
+      </div>
+      <div class="crop-actions">
+        <button class="mini-btn accent" id="autoCropBtn" type="button" style="flex:1; padding:10px;">Auto-Detect</button>
+        <button class="mini-btn" id="resetCropBtn" type="button" style="flex:1; padding:10px;">Reset Full</button>
+      </div>
+      <button class="btn-main btn-primary" id="applyCropBtn" type="button" style="width:100%;">Apply Trim</button>
+    </div>
+  </div>
+
   <!-- Install Help Modal -->
   <div class="modal-backdrop" id="helpModal">
     <div class="modal">
@@ -594,7 +772,7 @@
         <li>Scroll down and tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li>
       </ol>
       <p>
-        Tip: For the best app experience and native Share Sheet support, host this single HTML file on any free HTTPS service (GitHub Pages, Netlify Drop, or Vercel).
+        Tip: Place your document on a darker surface (like a wooden table) for the cleanest automatic border trimming.
       </p>
       <button class="btn-main btn-primary" id="closeModalBtn" type="button" style="width:100%;">Got It</button>
     </div>
@@ -604,11 +782,16 @@
 
   <script>
     // State
-    const pages = []; // { id, img, rotation, previewUrl }
+    const pages = []; // { id, img, rotation, crop: { top, bottom, left, right }, trimmed, previewUrl }
     let qualityPreset = 'ultra';
-    let filterMode = 'bw';
+    let filterMode = 'gray'; // Grayscale predefined as default
+    let autoTrimEnabled = true;
     let lastPdfBlob = null;
     let lastPdfName = '';
+
+    // Crop modal state
+    let editingPageIdx = -1;
+    let tempCrop = { top: 0, bottom: 1, left: 0, right: 1 };
 
     const PRESETS = {
       ultra:    { maxDim: 1050, jpegQuality: 0.42 },
@@ -623,6 +806,7 @@
     const uploadInput = document.getElementById('uploadInput');
     const qualityGroup = document.getElementById('qualityGroup');
     const filterGroup = document.getElementById('filterGroup');
+    const autoTrimToggle = document.getElementById('autoTrimToggle');
     const filenameInput = document.getElementById('filenameInput');
     const pagesList = document.getElementById('pagesList');
     const pageCount = document.getElementById('pageCount');
@@ -638,6 +822,21 @@
     const closeModalBtn = document.getElementById('closeModalBtn');
     const toastEl = document.getElementById('toast');
 
+    // Crop modal elements
+    const cropModal = document.getElementById('cropModal');
+    const cropCanvas = document.getElementById('cropCanvas');
+    const rangeTop = document.getElementById('rangeTop');
+    const rangeBottom = document.getElementById('rangeBottom');
+    const rangeLeft = document.getElementById('rangeLeft');
+    const rangeRight = document.getElementById('rangeRight');
+    const valTop = document.getElementById('valTop');
+    const valBottom = document.getElementById('valBottom');
+    const valLeft = document.getElementById('valLeft');
+    const valRight = document.getElementById('valRight');
+    const autoCropBtn = document.getElementById('autoCropBtn');
+    const resetCropBtn = document.getElementById('resetCropBtn');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+
     // Set default filename
     function setDefaultFilename() {
       const d = new Date();
@@ -646,7 +845,7 @@
     }
     setDefaultFilename();
 
-    // Generate PNG apple-touch-icon dynamically so iOS displays a crisp icon on Home Screen
+    // Generate crisp PNG apple-touch-icon for iOS Home Screen
     (function generatePngTouchIcon() {
       try {
         const c = document.createElement('canvas');
@@ -686,7 +885,6 @@
       resultBanner.classList.remove('show');
     }
 
-    // Load file into Image object
     function loadImage(file) {
       return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
@@ -703,40 +901,207 @@
       });
     }
 
-    // Render image with rotation, resize, and filter onto canvas
-    function renderPageCanvas(page, maxDim, jpegQuality) {
-      const { img, rotation } = page;
+    // Helper: draw rotated full image onto a canvas at target max dimension
+    function drawRotatedCanvas(img, rotation, maxDim) {
       const rotated = rotation % 180 !== 0;
       const srcW = rotated ? img.naturalHeight : img.naturalWidth;
       const srcH = rotated ? img.naturalWidth : img.naturalHeight;
 
       const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
-      const outW = Math.max(1, Math.round(srcW * scale));
-      const outH = Math.max(1, Math.round(srcH * scale));
+      const w = Math.max(1, Math.round(srcW * scale));
+      const h = Math.max(1, Math.round(srcH * scale));
 
       const canvas = document.createElement('canvas');
-      canvas.width = outW;
-      canvas.height = outH;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, outW, outH);
-
+      ctx.fillRect(0, 0, w, h);
       ctx.save();
-      ctx.translate(outW / 2, outH / 2);
+      ctx.translate(w / 2, h / 2);
       ctx.rotate((rotation * Math.PI) / 180);
-      const drawW = rotated ? outH : outW;
-      const drawH = rotated ? outW : outH;
+      const drawW = rotated ? h : w;
+      const drawH = rotated ? w : h;
       ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.restore();
 
+      return canvas;
+    }
+
+    // Auto-detect white paper borders and return normalized crop { top, bottom, left, right }
+    function detectPaperBounds(img, rotation) {
+      const full = { top: 0, bottom: 1, left: 0, right: 1 };
+      const canvas = drawRotatedCanvas(img, rotation, 320);
+      const w = canvas.width;
+      const h = canvas.height;
+      if (w < 20 || h < 20) return full;
+
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const data = ctx.getImageData(0, 0, w, h).data;
+
+      // Collect luminance in center 40% (likely paper) vs outer 5% border (likely background)
+      const centerLums = [];
+      const borderLums = [];
+      const cx0 = Math.floor(w * 0.3), cx1 = Math.floor(w * 0.7);
+      const cy0 = Math.floor(h * 0.3), cy1 = Math.floor(h * 0.7);
+      const bx = Math.max(2, Math.floor(w * 0.05));
+      const by = Math.max(2, Math.floor(h * 0.05));
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
+          const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          if (x >= cx0 && x <= cx1 && y >= cy0 && y <= cy1) {
+            centerLums.push(lum);
+          } else if (x < bx || x >= w - bx || y < by || y >= h - by) {
+            borderLums.push(lum);
+          }
+        }
+      }
+
+      centerLums.sort((a, b) => a - b);
+      borderLums.sort((a, b) => a - b);
+
+      const paperRef = centerLums[Math.floor(centerLums.length * 0.70)] || 220;
+      const bgRef = borderLums[Math.floor(borderLums.length * 0.35)] || 80;
+
+      // If there's not enough contrast between paper and background, skip auto-trim
+      if (paperRef - bgRef < 18) return full;
+
+      const lumThresh = Math.max(95, bgRef + (paperRef - bgRef) * 0.45);
+      const maxSat = 70; // White paper has low color saturation
+
+      const rowPaper = new Float32Array(h);
+      const colPaper = new Float32Array(w);
+
+      for (let y = 0; y < h; y++) {
+        let count = 0;
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          const sat = Math.max(r, g, b) - Math.min(r, g, b);
+          if (lum >= lumThresh && sat <= maxSat) {
+            count++;
+            colPaper[x]++;
+          }
+        }
+        rowPaper[y] = count / w;
+      }
+      for (let x = 0; x < w; x++) colPaper[x] /= h;
+
+      const minRatio = 0.22;
+      const runLen = 3;
+
+      let topPx = 0;
+      for (let y = 0; y < h - runLen; y++) {
+        if (rowPaper[y] >= minRatio && rowPaper[y + 1] >= minRatio && rowPaper[y + 2] >= minRatio) {
+          topPx = y;
+          break;
+        }
+      }
+
+      let bottomPx = h;
+      for (let y = h - 1; y >= runLen; y--) {
+        if (rowPaper[y] >= minRatio && rowPaper[y - 1] >= minRatio && rowPaper[y - 2] >= minRatio) {
+          bottomPx = y + 1;
+          break;
+        }
+      }
+
+      let leftPx = 0;
+      for (let x = 0; x < w - runLen; x++) {
+        if (colPaper[x] >= minRatio && colPaper[x + 1] >= minRatio && colPaper[x + 2] >= minRatio) {
+          leftPx = x;
+          break;
+        }
+      }
+
+      let rightPx = w;
+      for (let x = w - 1; x >= runLen; x--) {
+        if (colPaper[x] >= minRatio && colPaper[x - 1] >= minRatio && colPaper[x - 2] >= minRatio) {
+          rightPx = x + 1;
+          break;
+        }
+      }
+
+      let top = topPx / h;
+      let bottom = bottomPx / h;
+      let left = leftPx / w;
+      let right = rightPx / w;
+
+      // Slight 0.8% inset on trimmed edges to cleanly shave off dark table border
+      const inset = 0.008;
+      if (top > 0.01) top = Math.min(0.45, top + inset);
+      if (bottom < 0.99) bottom = Math.max(0.55, bottom - inset);
+      if (left > 0.01) left = Math.min(0.45, left + inset);
+      if (right < 0.99) right = Math.max(0.55, right - inset);
+
+      // Sanity check: ensure we didn't over-crop
+      if (right - left < 0.25 || bottom - top < 0.25) return full;
+
+      return { top, bottom, left, right };
+    }
+
+    function isCropped(crop) {
+      return crop.top > 0.005 || crop.bottom < 0.995 || crop.left > 0.005 || crop.right < 0.995;
+    }
+
+    // Render image with rotation, border crop, resize, and filter onto canvas
+    function renderPageCanvas(page, maxDim, jpegQuality) {
+      const { img, rotation, crop } = page;
+      const rotated = rotation % 180 !== 0;
+      const fullW = rotated ? img.naturalHeight : img.naturalWidth;
+      const fullH = rotated ? img.naturalWidth : img.naturalHeight;
+
+      const cropWFrac = Math.max(0.1, crop.right - crop.left);
+      const cropHFrac = Math.max(0.1, crop.bottom - crop.top);
+
+      // Scale so the cropped output fits within maxDim
+      const rawCropW = fullW * cropWFrac;
+      const rawCropH = fullH * cropHFrac;
+      const scale = Math.min(1, maxDim / Math.max(rawCropW, rawCropH));
+
+      const interW = Math.max(1, Math.round(fullW * scale));
+      const interH = Math.max(1, Math.round(fullH * scale));
+
+      // Draw rotated full image at working scale
+      const interCanvas = document.createElement('canvas');
+      interCanvas.width = interW;
+      interCanvas.height = interH;
+      const interCtx = interCanvas.getContext('2d');
+      interCtx.fillStyle = '#ffffff';
+      interCtx.fillRect(0, 0, interW, interH);
+      interCtx.save();
+      interCtx.translate(interW / 2, interH / 2);
+      interCtx.rotate((rotation * Math.PI) / 180);
+      const drawW = rotated ? interH : interW;
+      const drawH = rotated ? interW : interH;
+      interCtx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      interCtx.restore();
+
+      // Extract cropped region
+      const sx = Math.round(crop.left * interW);
+      const sy = Math.round(crop.top * interH);
+      const sw = Math.max(1, Math.round(cropWFrac * interW));
+      const sh = Math.max(1, Math.round(cropHFrac * interH));
+
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = sw;
+      outCanvas.height = sh;
+      const ctx = outCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sw, sh);
+      ctx.drawImage(interCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      // Apply filter
       if (filterMode === 'gray' || filterMode === 'bw') {
-        const imgData = ctx.getImageData(0, 0, outW, outH);
+        const imgData = ctx.getImageData(0, 0, sw, sh);
         const d = imgData.data;
         for (let i = 0; i < d.length; i += 4) {
           let lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
           if (filterMode === 'bw') {
-            // High-contrast document enhancement: push paper to white, keep text crisp
             lum = (lum - 128) * 1.65 + 148;
             if (lum > 215) lum = 255;
             else if (lum < 35) lum = 0;
@@ -748,17 +1113,16 @@
       }
 
       return {
-        dataUrl: canvas.toDataURL('image/jpeg', jpegQuality),
-        width: outW,
-        height: outH
+        dataUrl: outCanvas.toDataURL('image/jpeg', jpegQuality),
+        width: sw,
+        height: sh
       };
     }
 
     function updatePreviews() {
       invalidatePdf();
       pages.forEach(p => {
-        const preview = renderPageCanvas(p, 260, 0.7);
-        p.previewUrl = preview.dataUrl;
+        p.previewUrl = renderPageCanvas(p, 260, 0.7).dataUrl;
       });
       renderPagesList();
     }
@@ -776,18 +1140,22 @@
         item.className = 'page-item';
 
         const rotated = p.rotation % 180 !== 0;
-        const w = rotated ? p.img.naturalHeight : p.img.naturalWidth;
-        const h = rotated ? p.img.naturalWidth : p.img.naturalHeight;
+        const baseW = rotated ? p.img.naturalHeight : p.img.naturalWidth;
+        const baseH = rotated ? p.img.naturalWidth : p.img.naturalHeight;
+        const w = Math.round(baseW * (p.crop.right - p.crop.left));
+        const h = Math.round(baseH * (p.crop.bottom - p.crop.top));
         const orientation = w > h ? 'Landscape' : 'Portrait';
+        const trimmedBadge = isCropped(p.crop) ? '<span class="badge">Trimmed</span>' : '';
 
         item.innerHTML = `
           <div class="page-thumb-wrap">
             <img src="${p.previewUrl}" alt="Page ${idx + 1}" />
           </div>
           <div class="page-meta">
-            <div class="page-title">Page ${idx + 1}</div>
+            <div class="page-title">Page ${idx + 1} ${trimmedBadge}</div>
             <div class="page-dims">${orientation} &bull; ${w}&times;${h}px</div>
             <div class="page-controls">
+              <button class="mini-btn accent" data-action="crop" data-idx="${idx}" type="button">&#9986; Trim</button>
               <button class="mini-btn" data-action="rotate" data-idx="${idx}" type="button">&#8635; Rotate</button>
               <button class="mini-btn" data-action="up" data-idx="${idx}" type="button" ${idx === 0 ? 'disabled' : ''}>&uarr;</button>
               <button class="mini-btn" data-action="down" data-idx="${idx}" type="button" ${idx === pages.length - 1 ? 'disabled' : ''}>&darr;</button>
@@ -806,7 +1174,16 @@
         if (!file.type.startsWith('image/')) continue;
         try {
           const img = await loadImage(file);
-          const page = { id: Date.now() + Math.random(), img, rotation: 0, previewUrl: '' };
+          const crop = autoTrimEnabled
+            ? detectPaperBounds(img, 0)
+            : { top: 0, bottom: 1, left: 0, right: 1 };
+          const page = {
+            id: Date.now() + Math.random(),
+            img,
+            rotation: 0,
+            crop,
+            previewUrl: ''
+          };
           page.previewUrl = renderPageCanvas(page, 260, 0.7).dataUrl;
           pages.push(page);
         } catch (err) {
@@ -816,6 +1193,99 @@
       invalidatePdf();
       renderPagesList();
     }
+
+    // Crop Modal Rendering
+    function drawCropPreview() {
+      if (editingPageIdx < 0 || !pages[editingPageIdx]) return;
+      const p = pages[editingPageIdx];
+      const base = drawRotatedCanvas(p.img, p.rotation, 420);
+      cropCanvas.width = base.width;
+      cropCanvas.height = base.height;
+      const ctx = cropCanvas.getContext('2d');
+      ctx.drawImage(base, 0, 0);
+
+      const x0 = Math.round(tempCrop.left * base.width);
+      const x1 = Math.round(tempCrop.right * base.width);
+      const y0 = Math.round(tempCrop.top * base.height);
+      const y1 = Math.round(tempCrop.bottom * base.height);
+
+      // Darken trimmed outer areas
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.fillRect(0, 0, base.width, y0); // top
+      ctx.fillRect(0, y1, base.width, base.height - y1); // bottom
+      ctx.fillRect(0, y0, x0, y1 - y0); // left
+      ctx.fillRect(x1, y0, base.width - x1, y1 - y0); // right
+
+      // Blue border around kept page
+      ctx.strokeStyle = '#007aff';
+      ctx.lineWidth = Math.max(2, Math.round(base.width / 120));
+      ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+    }
+
+    function syncCropSliders() {
+      const t = Math.round(tempCrop.top * 100);
+      const b = Math.round((1 - tempCrop.bottom) * 100);
+      const l = Math.round(tempCrop.left * 100);
+      const r = Math.round((1 - tempCrop.right) * 100);
+
+      rangeTop.value = t;    valTop.textContent = t + '%';
+      rangeBottom.value = b; valBottom.textContent = b + '%';
+      rangeLeft.value = l;   valLeft.textContent = l + '%';
+      rangeRight.value = r;  valRight.textContent = r + '%';
+      drawCropPreview();
+    }
+
+    function openCropModal(idx) {
+      editingPageIdx = idx;
+      tempCrop = { ...pages[idx].crop };
+      syncCropSliders();
+      cropModal.classList.add('open');
+    }
+
+    [rangeTop, rangeBottom, rangeLeft, rangeRight].forEach(slider => {
+      slider.addEventListener('input', () => {
+        tempCrop.top = Number(rangeTop.value) / 100;
+        tempCrop.bottom = 1 - Number(rangeBottom.value) / 100;
+        tempCrop.left = Number(rangeLeft.value) / 100;
+        tempCrop.right = 1 - Number(rangeRight.value) / 100;
+        valTop.textContent = rangeTop.value + '%';
+        valBottom.textContent = rangeBottom.value + '%';
+        valLeft.textContent = rangeLeft.value + '%';
+        valRight.textContent = rangeRight.value + '%';
+        drawCropPreview();
+      });
+    });
+
+    autoCropBtn.addEventListener('click', () => {
+      if (editingPageIdx < 0) return;
+      const p = pages[editingPageIdx];
+      tempCrop = detectPaperBounds(p.img, p.rotation);
+      syncCropSliders();
+      showToast(isCropped(tempCrop) ? 'White borders detected' : 'No dark border found');
+    });
+
+    resetCropBtn.addEventListener('click', () => {
+      tempCrop = { top: 0, bottom: 1, left: 0, right: 1 };
+      syncCropSliders();
+    });
+
+    applyCropBtn.addEventListener('click', () => {
+      if (editingPageIdx >= 0 && pages[editingPageIdx]) {
+        pages[editingPageIdx].crop = { ...tempCrop };
+        pages[editingPageIdx].previewUrl = renderPageCanvas(pages[editingPageIdx], 260, 0.7).dataUrl;
+        invalidatePdf();
+        renderPagesList();
+      }
+      cropModal.classList.remove('open');
+      editingPageIdx = -1;
+    });
+
+    cropModal.addEventListener('click', (e) => {
+      if (e.target === cropModal) {
+        cropModal.classList.remove('open');
+        editingPageIdx = -1;
+      }
+    });
 
     async function buildPdf() {
       if (!pages.length) return null;
@@ -841,7 +1311,7 @@
 
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
-        const margin = 4; // subtle 4mm margin
+        const margin = 4;
         const availW = pageW - margin * 2;
         const availH = pageH - margin * 2;
 
@@ -919,14 +1389,24 @@
       updatePreviews();
     });
 
+    autoTrimToggle.addEventListener('change', (e) => {
+      autoTrimEnabled = e.target.checked;
+    });
+
     pagesList.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
       const idx = Number(btn.dataset.idx);
       const action = btn.dataset.action;
 
-      if (action === 'rotate') {
+      if (action === 'crop') {
+        openCropModal(idx);
+        return;
+      } else if (action === 'rotate') {
         pages[idx].rotation = (pages[idx].rotation + 90) % 360;
+        pages[idx].crop = autoTrimEnabled
+          ? detectPaperBounds(pages[idx].img, pages[idx].rotation)
+          : { top: 0, bottom: 1, left: 0, right: 1 };
         pages[idx].previewUrl = renderPageCanvas(pages[idx], 260, 0.7).dataUrl;
       } else if (action === 'up' && idx > 0) {
         [pages[idx - 1], pages[idx]] = [pages[idx], pages[idx - 1]];
